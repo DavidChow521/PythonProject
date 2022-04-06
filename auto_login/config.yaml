@@ -1,0 +1,47 @@
+SSO :
+  url: https://sso.ztn.cn/cas/login?locale=zh_CN
+  account: zt13415
+  password:
+  filter: 
+    account:
+      id: 'username'
+    password:
+      id: 'password2'
+    captcha:
+      id: False
+    login:
+      class_name: 'login_in'
+      event: 'click'
+
+Tapd:
+  url: https://www.tapd.cn/cloud_logins/login
+  account: zt13415@ztn.com
+  password:
+  filter: 
+    account:
+      id: 'username'
+    password:
+      id: 'password_input'
+    captcha:
+      enable: False
+    login:
+      id: 'tcloud_login_button'
+      event: 'submit'
+
+
+Yapi:
+  url: http://yapi.eminxing.com/login
+  account: zt13415@ztn.com
+  password:
+  filter: 
+    account:
+      id: 'email'
+    password:
+      id: 'password'
+    captcha:
+      enable: False
+    login:
+      class_name: 'login-form-button'
+      event: 'click'
+
+
