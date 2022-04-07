@@ -47,13 +47,22 @@ class CheckFbgRelation(object):
 
     def exec(self):
         for x in range(1, 7):
+            total_count = 0
             if x == 1:
+                # 先统计确认冲销数据
+                self._table_prefix = _PAYABLE_CONFIRM_RELATION_
+                total_count = self.__do_threads_return_count(True)
+
                 self._table_prefix = _PAYABLE_ESTIMATED_RELATION_
                 self._es_index = _ES_PAYABLE_ESTIMATED_RELATION_
             elif x == 2:
                 self._table_prefix = _PAYABLE_CONFIRM_RELATION_
                 self._es_index = _ES_PAYABLE_CONFIRM_RELATION_
             elif x == 3:
+                # 先统计确认冲销数据
+                self._table_prefix = _RECEIVABLE_CONFIRM_RELATION_
+                total_count = self.__do_threads_return_count(True)
+
                 self._table_prefix = _RECEIVABLE_ESTIMATED_RELATION_
                 self._es_index = _ES_RECEIVABLE_ESTIMATED_RELATION_
             elif x == 4:
@@ -68,46 +77,40 @@ class CheckFbgRelation(object):
             else:
                 break;
 
-            self.__do_threads()
-            pt.add_row(["数据库", self._table_prefix, self._total_count])
+            total_count += self.__do_threads_return_count()
+            pt.add_row(["数据库", self._table_prefix, total_count])
             self.__get_es_alias_count()
         print(pt)
 
-    def __do_threads(self):
-        self._total_count = 0
+    def __do_threads_return_count(self, write_off=False):
+        total_count = 0
         databases = self.config.get('DataBases')
         threads = []
         for x in range(0, 3):
             db = databases[x]
-            thread = ThreadPoolManage(call_action, db, self.__get_select_sql())
+            thread = ThreadPoolManage(call_action, db, self.__get_select_sql(write_off))
             thread.start()
             threads.append(thread)
 
         for t in threads:
             t.join()
-            self._total_count += Decimal(t.get_result())
+            total_count += Decimal(t.get_result())
 
-    def __get_select_sql(self):
+        return total_count
+
+    def __get_select_sql(self, write_off=False):
         sql_list = []
         for i in range(0, 65):
-            sql_list.append(f"select count(*) row_count from {self._table_prefix}_{i}")
+            sql = f"select count(*) row_count from {self._table_prefix}_{i}"
+            # 是否销账
+            if write_off:
+                sql += " where origin_data_type=2"
+            sql_list.append(sql)
 
         union_all_sql = " union all \n".join(sql_list)
         select_sql = f"""select sum(t.row_count) row_count from (
                 {union_all_sql}
                 )t"""
-
-        return select_sql
-
-    def __get_s(self,table_prefix):
-        sql_list = []
-        for i in range(0, 65):
-            sql_list.append(f"select count(*) row_count from {table_prefix}_{i} where origin_data_type=2")
-
-        union_all_sql = " union all \n".join(sql_list)
-        select_sql = f"""select sum(t.row_count) row_count from (
-                        {union_all_sql}
-                        )t"""
 
         return select_sql
 
