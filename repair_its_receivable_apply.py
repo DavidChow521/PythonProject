@@ -9,6 +9,7 @@
 import datetime
 from libs.conn_mysql import ConnMySql
 from libs.yaml_config import global_yaml_config
+from libs.write_file import WriteFile as wf
 
 
 class RepairItsReceivableApply(object):
@@ -28,6 +29,6 @@ class RepairItsReceivableApply(object):
             pay_status = 4 if payment_status == 2 else 5
             id = data.get('id')
             payable_submit_code = data.get('payable_submit_code')
-            update_sql = "update its_receivable_apply set pay_type=1, update_time='{0}', pay_status={1}, pay_postscript='{2}' where id={3};".format(
+            update_sql = "update its_receivable_apply set pay_type=1, update_time='{0}', pay_status={1}, pay_postscript='{2}' where id={3};\n".format(
                 self.now_datetime, pay_status, payable_submit_code, id)
-            print(update_sql)
+            wf('历史收款修复脚本.sql').append(update_sql)

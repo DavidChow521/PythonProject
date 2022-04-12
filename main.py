@@ -11,6 +11,6 @@ from check_its_bill_detail import CheckItsBillDetail
 from check_fbg_relation import CheckFbgRelation
 
 if __name__ == '__main__':
-    # RepairItsReceivableApply()
+    RepairItsReceivableApply()
     # CheckFbgRelation().exec()
-    CheckItsBillDetail().exec()
+    # CheckItsBillDetail().exec()
