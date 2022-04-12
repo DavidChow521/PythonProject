@@ -6,11 +6,11 @@
 # @File : main.py
 # @Software: PyCharm
 
-from repair_its_receivable_apply import RepairItsReceivableApply
+from its_receivable_apply_history_repair import ItsReceivableApplyHistoryRepair
 from check_its_bill_detail import CheckItsBillDetail
 from check_fbg_relation import CheckFbgRelation
 
 if __name__ == '__main__':
-    RepairItsReceivableApply()
+    ItsReceivableApplyHistoryRepair()
     # CheckFbgRelation().exec()
     # CheckItsBillDetail().exec()

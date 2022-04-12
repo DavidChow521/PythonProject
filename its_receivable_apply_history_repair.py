@@ -3,7 +3,7 @@
 # @Time : 2022-04-01 18:29:27
 # @Author : zhoutao
 # @Email : zt13415@ztn.com
-# @File : check_its_bill_detail.py
+# @File : its_receivable_apply_history_repair.py
 # @Software: PyCharm
 
 import datetime
@@ -12,7 +12,7 @@ from libs.yaml_config import global_yaml_config
 from libs.write_file import WriteFile as wf
 
 
-class RepairItsReceivableApply(object):
+class ItsReceivableApplyHistoryRepair(object):
     """
     修复历史收款申请单
 
@@ -31,4 +31,4 @@ class RepairItsReceivableApply(object):
             payable_submit_code = data.get('payable_submit_code')
             update_sql = "update its_receivable_apply set pay_type=1, update_time='{0}', pay_status={1}, pay_postscript='{2}' where id={3};\n".format(
                 self.now_datetime, pay_status, payable_submit_code, id)
-            wf('历史收款修复脚本.sql').append(update_sql)
+            wf('V3.8.0-修复历史收款申请.sql').append(update_sql)
