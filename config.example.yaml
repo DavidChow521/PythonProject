@@ -1,0 +1,39 @@
+EsBaseUrl:
+# 主库
+DataBase:
+  host:
+  port:
+  user:
+  password:
+  database:
+# 关联结算
+ItsRelation:
+  DataBases:
+    - host:
+      port:
+      user:
+      password:
+      database:
+    - host:
+      port:
+      user:
+      password:
+      database:
+# fbg关联结算
+FbgRelation:
+  DataBases:
+    - host:
+      port:
+      user:
+      password:
+      database:
+    - host:
+      port:
+      user:
+      password:
+      database:
+    - host:
+      port:
+      user:
+      password:
+      database:
