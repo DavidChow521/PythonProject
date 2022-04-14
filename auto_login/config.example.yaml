@@ -1,6 +1,6 @@
 SSO :
   url: https://sso.ztn.cn/cas/login?locale=zh_CN
-  account: zt13415
+  account:
   password:
   filter: 
     account:
@@ -15,7 +15,7 @@ SSO :
 
 Tapd:
   url: https://www.tapd.cn/cloud_logins/login
-  account: zt13415@ztn.com
+  account:
   password:
   filter: 
     account:
@@ -31,7 +31,7 @@ Tapd:
 
 Yapi:
   url: http://yapi.eminxing.com/login
-  account: zt13415@ztn.com
+  account:
   password:
   filter: 
     account:
