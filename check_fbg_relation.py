@@ -12,29 +12,26 @@ from decimal import Decimal
 from libs.yaml_config import global_yaml_config
 from libs.conn_mysql import ConnMySql
 from libs.thread_pool_manage import ThreadPoolManage
+from libs.feishu_robot_notify import FeiShuRobotNotify as notify
 
-_RECEIVABLE_ESTIMATED_RELATION_ = 'fin_fbg_receivable_estimated_relation'
-_PAYABLE_ESTIMATED_RELATION_ = 'fin_fbg_payable_estimated_relation'
-_RECEIVABLE_CONFIRM_RELATION_ = 'fin_fbg_receivable_confirm_relation'
-_PAYABLE_CONFIRM_RELATION_ = 'fin_fbg_payable_confirm_relation'
-_INCOME_CONFIRM_RELATION_ = 'fin_fbg_income_confirm_relation'
-_COST_CONFIRM_RELATION_ = 'fin_fbg_cost_confirm_relation'
+RECEIVABLE_ESTIMATED_RELATION = 'fin_fbg_receivable_estimated_relation'
+PAYABLE_ESTIMATED_RELATION = 'fin_fbg_payable_estimated_relation'
+RECEIVABLE_CONFIRM_RELATION = 'fin_fbg_receivable_confirm_relation'
+PAYABLE_CONFIRM_RELATION = 'fin_fbg_payable_confirm_relation'
+INCOME_CONFIRM_RELATION = 'fin_fbg_income_confirm_relation'
+COST_CONFIRM_RELATION = 'fin_fbg_cost_confirm_relation'
 
-_ES_COST_CONFIRM_RELATION_ = 'fbg_prod_es_cost_confirm_relation'
-_ES_INCOME_CONFIRM_RELATION_ = "fbg_prod_es_income_confirm_relation"
-_ES_PAYABLE_CONFIRM_RELATION_ = "fbg_prod_es_payable_confirm_relation"
-_ES_PAYABLE_ESTIMATED_RELATION_ = "fbg_prod_es_payable_estimated_relation"
-_ES_RECEIVABLE_CONFIRM_RELATION_ = "fbg_prod_es_receivable_confirm_relation"
-_ES_RECEIVABLE_ESTIMATED_RELATION_ = "fbg_prod_es_receivable_estimated_relation"
+ES_COST_CONFIRM_RELATION = 'fbg_prod_es_cost_confirm_relation'
+ES_INCOME_CONFIRM_RELATION = "fbg_prod_es_income_confirm_relation"
+ES_PAYABLE_CONFIRM_RELATION = "fbg_prod_es_payable_confirm_relation"
+ES_PAYABLE_ESTIMATED_RELATION = "fbg_prod_es_payable_estimated_relation"
+ES_RECEIVABLE_CONFIRM_RELATION = "fbg_prod_es_receivable_confirm_relation"
+ES_RECEIVABLE_ESTIMATED_RELATION = "fbg_prod_es_receivable_estimated_relation"
 
 
 def call_action(conn, sql):
     db = ConnMySql(conn)
     return db.first(sql).get('row_count')
-
-
-pt = prettytable.PrettyTable()
-pt.field_names = ["来 源", "交易流水", "数据量"]
 
 
 class CheckFbgRelation(object):
@@ -43,6 +40,7 @@ class CheckFbgRelation(object):
     """
 
     def __init__(self):
+        self.notify_content = ""
         self.config = global_yaml_config.get('FbgRelation')
 
     def exec(self):
@@ -50,37 +48,39 @@ class CheckFbgRelation(object):
             total_count = 0
             if x == 1:
                 # 先统计确认冲销数据
-                self._table_prefix = _PAYABLE_CONFIRM_RELATION_
+                self._table_prefix = PAYABLE_CONFIRM_RELATION
                 total_count = self.__do_threads_return_count(True)
 
-                self._table_prefix = _PAYABLE_ESTIMATED_RELATION_
-                self._es_index = _ES_PAYABLE_ESTIMATED_RELATION_
+                self._table_prefix = PAYABLE_ESTIMATED_RELATION
+                self._es_index = ES_PAYABLE_ESTIMATED_RELATION
             elif x == 2:
-                self._table_prefix = _PAYABLE_CONFIRM_RELATION_
-                self._es_index = _ES_PAYABLE_CONFIRM_RELATION_
+                self._table_prefix = PAYABLE_CONFIRM_RELATION
+                self._es_index = ES_PAYABLE_CONFIRM_RELATION
             elif x == 3:
                 # 先统计确认冲销数据
-                self._table_prefix = _RECEIVABLE_CONFIRM_RELATION_
+                self._table_prefix = RECEIVABLE_CONFIRM_RELATION
                 total_count = self.__do_threads_return_count(True)
 
-                self._table_prefix = _RECEIVABLE_ESTIMATED_RELATION_
-                self._es_index = _ES_RECEIVABLE_ESTIMATED_RELATION_
+                self._table_prefix = RECEIVABLE_ESTIMATED_RELATION
+                self._es_index = ES_RECEIVABLE_ESTIMATED_RELATION
             elif x == 4:
-                self._table_prefix = _RECEIVABLE_CONFIRM_RELATION_
-                self._es_index = _ES_RECEIVABLE_CONFIRM_RELATION_
+                self._table_prefix = RECEIVABLE_CONFIRM_RELATION
+                self._es_index = ES_RECEIVABLE_CONFIRM_RELATION
             elif x == 5:
-                self._table_prefix = _INCOME_CONFIRM_RELATION_
-                self._es_index = _ES_INCOME_CONFIRM_RELATION_
+                self._table_prefix = INCOME_CONFIRM_RELATION
+                self._es_index = ES_INCOME_CONFIRM_RELATION
             elif x == 6:
-                self._table_prefix = _COST_CONFIRM_RELATION_
-                self._es_index = _ES_COST_CONFIRM_RELATION_
+                self._table_prefix = COST_CONFIRM_RELATION
+                self._es_index = ES_COST_CONFIRM_RELATION
             else:
                 break;
 
             total_count += self.__do_threads_return_count()
-            pt.add_row(["数据库", self._table_prefix, total_count])
+            self.notify_content += f"**MySql** (*{self._table_prefix}*)：{format(total_count, ',')}\n"
             self.__get_es_alias_count()
-        print(pt)
+            self.notify_content += "\n"
+
+        self._send()
 
     def __do_threads_return_count(self, write_off=False):
         total_count = 0
@@ -119,6 +119,9 @@ class CheckFbgRelation(object):
             '{0}/{1}/_count'.format(global_yaml_config.get("EsBaseUrl"), self._es_index))
         if resp.status_code == 200:
             count = resp.json().get('count')
-            pt.add_row(["Elasticsearch", self._es_index, count])
+            self.notify_content += f"**Elasticsearch** (*{self._es_index}*) ：{format(count, ',')}\n"
             return count
         return 0
+
+    def _send(self):
+        notify(global_yaml_config.get('Webhook')).card('【内部关联方】FBG交易流水', self.notify_content)

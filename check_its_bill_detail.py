@@ -7,20 +7,20 @@
 # @Software: PyCharm
 
 import datetime
-import prettytable
 import requests
 from decimal import Decimal
 from dateutil.relativedelta import relativedelta
 from libs.thread_pool_manage import ThreadPoolManage
 from libs.conn_mysql import ConnMySql
 from libs.yaml_config import global_yaml_config
+from libs.feishu_robot_notify import FeiShuRobotNotify as notify
 
-_DB_PREFIX_ = 'its_settlement'
-_PAYABLE_BILL_DETAIL_PREFIX_ = 'its_payable_bill_detail'
-_RECEIVABLE_BILL_DETAIL_PREFIX_ = 'its_receivable_bill_detail'
+DB_PREFIX = 'its_settlement'
+PAYABLE_BILL_DETAIL_PREFIX = 'its_payable_bill_detail'
+RECEIVABLE_BILL_DETAIL_PREFIX = 'its_receivable_bill_detail'
 
-_ES_PAYABLE_BILL_DETAIL_INDEX_ = 'its_prod_es_payable_bill'
-_ES_RECEIVABLE_BILL_DETAIL_INDEX_ = 'its_prod_es_receivable_bill'
+ES_PAYABLE_BILL_DETAIL_INDEX = 'its_prod_es_payable_bill'
+ES_RECEIVABLE_BILL_DETAIL_INDEX = 'its_prod_es_receivable_bill'
 
 
 def call_action(conn, sql):
@@ -28,17 +28,14 @@ def call_action(conn, sql):
     return db.first(sql).get('row_count')
 
 
-pt = prettytable.PrettyTable()
-pt.field_names = ["来 源", "交易流水", "数据量"]
-
-
 class CheckItsBillDetail(object):
     """
     校验应付账单、应收账单明细数据量
-
+    https://open.feishu.cn/document/ukTMukTMukTM/uADOwUjLwgDM14CM4ATN
     """
 
     def __init__(self):
+        self.notify_content = ""
         self.config = global_yaml_config.get("ItsRelation")
         self.now_datetime = datetime.datetime.now()
         self.end_time = datetime.datetime(year=self.now_datetime.year, month=self.now_datetime.month, day=1)
@@ -46,15 +43,15 @@ class CheckItsBillDetail(object):
     def exec(self):
         for x in range(1, 3):
             if x == 1:
-                self._table_prefix = _PAYABLE_BILL_DETAIL_PREFIX_
-                self._es_index = _ES_PAYABLE_BILL_DETAIL_INDEX_
+                self._table_prefix = PAYABLE_BILL_DETAIL_PREFIX
+                self._es_index = ES_PAYABLE_BILL_DETAIL_INDEX
             else:
-                self._table_prefix = _RECEIVABLE_BILL_DETAIL_PREFIX_
-                self._es_index = _ES_RECEIVABLE_BILL_DETAIL_INDEX_
+                self._table_prefix = RECEIVABLE_BILL_DETAIL_PREFIX
+                self._es_index = ES_RECEIVABLE_BILL_DETAIL_INDEX
 
             self.__do_instance()
 
-        print(pt)
+        self._send()
 
     def __do_instance(self):
         self._total_count = 0
@@ -62,8 +59,9 @@ class CheckItsBillDetail(object):
         for db in databases:
             self.__do_threads(db)
 
-        pt.add_row(["数据库", self._table_prefix, self._total_count])
+        self.notify_content += f"**MySql** (*{self._table_prefix}*)：{format(self._total_count, ',')}\n"
         self.__get_es_alias_count()
+        self.notify_content += "\n"
 
     def __do_threads(self, db):
         threads = []
@@ -84,7 +82,7 @@ class CheckItsBillDetail(object):
         sql_list = []
         for i in range(0, 32):
             sql_list.append(
-                f"select count(*) row_count from {_DB_PREFIX_}_{self._account_time}.{self._table_prefix}_{i}")
+                f"select count(*) row_count from {DB_PREFIX}_{self._account_time}.{self._table_prefix}_{i}")
 
         union_all_sql = " union all \n".join(sql_list)
         select_sql = f"""select sum(t.row_count) row_count from (
@@ -98,6 +96,9 @@ class CheckItsBillDetail(object):
             '{0}/{1}/_count'.format(global_yaml_config.get("EsBaseUrl"), self._es_index))
         if resp.status_code == 200:
             count = resp.json().get('count')
-            pt.add_row(["Elasticsearch", self._es_index, count])
+            self.notify_content += f"**Elasticsearch** (*{self._es_index}*) ：{format(count, ',')}\n"
             return count
         return 0
+
+    def _send(self):
+        notify(global_yaml_config.get('Webhook')).card('【内部关联方】结算账单明细', self.notify_content)
