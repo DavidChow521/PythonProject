@@ -3,7 +3,7 @@ from libs.selenium_login import Login
 from libs.yaml_config import global_yaml_config
 
 __DEF__ = {
-    "url": "http://rdpm.eminxing.com/index",
+    "url": global_yaml_config.get('Tapd').get('url'),
     "account": global_yaml_config.get('SSO').get('account'),
     "password": global_yaml_config.get('SSO').get('password'),
 }
@@ -17,6 +17,3 @@ def callback(*args):
 
 
 Login.process(__DEF__, __FILTER__, callback)
-
-
-
