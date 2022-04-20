@@ -14,6 +14,7 @@ from libs.constants_enum import Template
 class FeiShuRobotNotify(object):
     """
     飞书机器人通知
+    https://open.feishu.cn/document/ukTMukTMukTM/uADOwUjLwgDM14CM4ATN
     """
 
     def __init__(self, url):

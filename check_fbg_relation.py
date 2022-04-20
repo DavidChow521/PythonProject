@@ -6,7 +6,6 @@
 # @File : check_its_bill_detail.py
 # @Software: PyCharm
 
-import prettytable
 import requests
 from decimal import Decimal
 from libs.yaml_config import global_yaml_config
@@ -84,10 +83,9 @@ class CheckFbgRelation(object):
 
     def __do_threads_return_count(self, write_off=False):
         total_count = 0
-        databases = self.config.get('DataBases')
         threads = []
-        for x in range(0, 3):
-            db = databases[x]
+        databases = self.config.get('DataBases')
+        for db in databases:
             thread = ThreadPoolManage(call_action, db, self.__get_select_sql(write_off))
             thread.start()
             threads.append(thread)

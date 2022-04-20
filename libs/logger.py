@@ -17,6 +17,7 @@ class Logger(object):
         formatter = logging.Formatter(
             '%(levelname)s - %(asctime)s - %(pathname)s[line:%(lineno)d] - %(process)d-%(threadName)s ↴\n%(message)s \n')
 
+        # 控制台输出
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)

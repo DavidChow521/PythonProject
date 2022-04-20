@@ -9,8 +9,10 @@
 from its_receivable_apply_history_repair import ItsReceivableApplyHistoryRepair
 from check_its_bill_detail import CheckItsBillDetail
 from check_fbg_relation import CheckFbgRelation
+from check_lbg_relation import CheckLbgRelation
 
 if __name__ == '__main__':
     ItsReceivableApplyHistoryRepair()
     # CheckFbgRelation().exec()
     # CheckItsBillDetail().exec()
+    # CheckLbgRelation().exec()

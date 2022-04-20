@@ -31,7 +31,6 @@ def call_action(conn, sql):
 class CheckItsBillDetail(object):
     """
     校验应付账单、应收账单明细数据量
-    https://open.feishu.cn/document/ukTMukTMukTM/uADOwUjLwgDM14CM4ATN
     """
 
     def __init__(self):

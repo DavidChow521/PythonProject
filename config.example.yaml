@@ -38,3 +38,21 @@ FbgRelation:
       user:
       password:
       database:
+# lbg关联结算
+LbgRelation:
+  DataBases:
+    - host:
+      port:
+      user:
+      password:
+      databases: [ ]
+    - host:
+      port:
+      user:
+      password:
+      databases: [ ]
+    - host: ''
+      port:
+      user:
+      password:
+      databases: [ ]
