@@ -10,25 +10,24 @@ import datetime
 import requests
 from bs4 import BeautifulSoup
 from chinese_calendar import is_workday
-
-global_config = [
-
-]
+from libs.yaml_config import global_yaml_config
 
 
 class ListeningTapdTask():
     def __init__(self):
         self.now_datetime = datetime.datetime.now()
+        self.config = global_yaml_config.get('TapdTask')
 
         # 是否工作日
         if is_workday(self.now_datetime.date()):
-            for x in global_config:
+            for x in self.config:
                 self._cookies = x["tapd_cookie"]
-                self._feishu_user_open_ids = x["feishu_user_open_id"]
                 self._robot_url = x["feishu_robot_url"]
-                for project_id in x["tapd_project_id"]:
-                    self._project_id = project_id
-                    resp = requests.get(f'https://www.tapd.cn/{project_id}/prong/tasks', headers=self._get_headers(),
+                for project in x["tapd_projects"]:
+                    self._feishu_user_open_ids = project["user_open_ids"]
+                    self._project_id = project["id"]
+                    resp = requests.get(f'https://www.tapd.cn/{self._project_id}/prong/tasks',
+                                        headers=self._get_headers(),
                                         cookies=self._get_cookies(),
                                         proxies=self._get_proxies())
                     self.execute(resp)
@@ -52,13 +51,13 @@ class ListeningTapdTask():
         return {"extra": {"tag": "button", "text": {"content": "👉 去处理", "tag": "plain_text"}, "type": "primary",
                           "url": href}, "tag": "div",
                 "text": {
-                    "content": f"**{title}** \n🔹 迭代：[{iteration}]({iteration_href})\n🔔 状态：{status}\n⌚ 工时：{hour} 天\n🙈 处理人：<at id={open_id}></at>\n📅 预计时间：{from_time} 至 {to_time}",
+                    "content": f"**{title}** \n🔹 迭代：[{iteration}]({iteration_href})\n🔔 状态：{status}\n⌚ 工时：{hour} 天\n🙊 处理人：<at id={open_id}></at>\n📅 预计时间：{from_time} 至 {to_time}",
                     "tag": "lark_md"}}
 
-    def _get_add_task_template(self, from_time, to_time, open_id):
-        return {"extra": {"tag": "button", "text": {"content": "👉 去处理", "tag": "plain_text"}, "type": "danger",
+    def _get_add_task_template(self, open_id):
+        return {"extra": {"tag": "button", "text": {"content": "👉 去创建", "tag": "plain_text"}, "type": "danger",
                           "url": f"https://www.tapd.cn/{self._project_id}/prong/tasks/add"}, "tag": "div",
-                "text": {"content": f"**⚠ 未找到今日任务** \n📅 预计时间：{from_time} 至 {to_time}\n🙈 处理人：<at id={open_id}></at>",
+                "text": {"content": f"**未找到今日任务** \n🙊 处理人：<at id={open_id}></at>",
                          "tag": "lark_md"}}
 
     def execute(self, resp):
@@ -104,11 +103,11 @@ class ListeningTapdTask():
     def _get_message(self, task_list):
         _init_msg = {"msg_type": "interactive", "card": {"config": {"enable_forward": True}, "elements": [],
                                                          "header": {"template": "orange",
-                                                                    "title": {"content": self._project_name,
+                                                                    "title": {"content": f"🏷️ {self._project_name}",
                                                                               "tag": "plain_text"}}}}
         card_msg = {"msg_type": "interactive", "card": {"config": {"enable_forward": True}, "elements": [],
                                                         "header": {"template": "orange",
-                                                                   "title": {"content": self._project_name,
+                                                                   "title": {"content": f"🏷️ {self._project_name}",
                                                                              "tag": "plain_text"}}}}
         expires_time = datetime.datetime(year=self.now_datetime.year, month=self.now_datetime.month,
                                          day=self.now_datetime.day)
@@ -123,9 +122,7 @@ class ListeningTapdTask():
                         break
 
                 if is_exists == False:
-                    _extra = self._get_add_task_template(expires_time.strftime("%Y-%m-%d"),
-                                                         expires_time.strftime("%Y-%m-%d"),
-                                                         self._feishu_user_open_ids[u])
+                    _extra = self._get_add_task_template(self._feishu_user_open_ids[u])
                     card_msg["card"]["elements"].append(_extra)
                     if len(task_list) != 0:
                         card_msg["card"]["elements"].append({"tag": "hr"})
