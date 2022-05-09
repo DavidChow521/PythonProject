@@ -58,9 +58,8 @@ LbgRelation:
       databases: [ ]
 #tapd任务通知
 TapdTask:
-- tapd_projects:
-    - id:
-      user_open_ids:
-        用户名: ''
-  tapd_cookie: ""
-  feishu_robot_url: ""
+  - tapd_projects: [ ]
+    user_open_ids:
+      用户名: ''
+    tapd_cookie: ""
+    feishu_robot_url: ""

@@ -16,7 +16,7 @@ from libs.yaml_config import global_yaml_config
 class ListeningTapdTask():
     def __init__(self):
         self.now_datetime = datetime.datetime.now()
-        # self.now_datetime = datetime.datetime.strptime('2022-06-17 18:00:00', "%Y-%m-%d %H:%M:%S")
+        # self.now_datetime = datetime.datetime.strptime('2022-05-12 18:00:00', "%Y-%m-%d %H:%M:%S")
         self.expires_time = datetime.datetime(year=self.now_datetime.year, month=self.now_datetime.month,
                                               day=self.now_datetime.day)
         self.config = global_yaml_config.get('TapdTask')
@@ -104,8 +104,9 @@ class ListeningTapdTask():
                 for x in task_list:
                     to_date_time = datetime.datetime.strptime(x["to_time"], "%Y-%m-%d")
                     if u == x["user"] and to_date_time >= self.expires_time:
-                        self._not_task_users_list.remove(u)
                         is_exists = True
+                        if u in self._not_task_users_list:
+                            self._not_task_users_list.remove(u)
                         break
 
                 if is_exists == False:
