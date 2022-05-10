@@ -11,6 +11,7 @@ import requests
 from bs4 import BeautifulSoup
 from chinese_calendar import is_workday
 from libs.yaml_config import global_yaml_config
+from libs.logger import logger
 
 
 class ListeningTapdTask():
@@ -43,12 +44,14 @@ class ListeningTapdTask():
                             # print(card_msg)
                             self._send(card_msg)
 
-                    print(f'执行项目Id：{self._project_id} 结束！')
+                    print(f'执行【{self._project_name}】项目结束！')
 
                 card_msg = self._get_not_task_message()
                 if card_msg != None:
                     # print(card_msg)
                     self._send(card_msg)
+
+        logger.info('execute completed!')
 
     def _get_task_list(self, html_content):
         task_list = []

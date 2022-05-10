@@ -11,7 +11,8 @@ import configparser
 
 class IniConfig(object):
     def __init__(self, file='config.ini'):
-        curPath = os.path.join(os.getcwd(), file)
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        curPath = os.path.join(base_dir, file)
         if not os.path.exists(curPath):
             raise FileNotFoundError("No such file: config.ini")
         self._config = configparser.ConfigParser()

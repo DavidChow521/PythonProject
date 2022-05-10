@@ -12,7 +12,8 @@ import yaml
 class YamlConfig(object):
     def __init__(self, file='config.yaml'):
         # 获取yaml文件路径
-        yamlPath = os.path.join(os.getcwd(), file)
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        yamlPath = os.path.join(base_dir, file)
         if not os.path.exists(yamlPath):
             raise FileNotFoundError("No such file: config.yaml")
         # open方法打开直接读出来

@@ -10,7 +10,6 @@ import logging.handlers
 
 logger = logging.getLogger()
 
-
 class Logger(object):
     def __init__(self, file='appliction.log'):
         logger.setLevel(logging.INFO)
@@ -26,6 +25,5 @@ class Logger(object):
             file, maxBytes=10485760, backupCount=15, encoding="utf-8")
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
-
 
 Logger()

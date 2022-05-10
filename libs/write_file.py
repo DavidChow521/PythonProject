@@ -17,7 +17,8 @@ class WriteFile(object):
     """
 
     def __init__(self, file_name):
-        self.file_path = f"{os.getcwd()}\\{file_name}"
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.file_path = f"{base_dir}\\{file_name}"
 
     def create(self, content):
         self._write_(content, 'w')
