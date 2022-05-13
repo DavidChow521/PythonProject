@@ -19,7 +19,7 @@ from libs.yaml_config import global_yaml_config
 class TapdSpider():
     def __init__(self):
         self.now_datetime = datetime.datetime.now()
-        # self.now_datetime = datetime.datetime.strptime('2022-05-13 17:00:00', "%Y-%m-%d %H:%M:%S")
+        # self.now_datetime = datetime.datetime.strptime('2022-05-26 18:00:00', "%Y-%m-%d %H:%M:%S")
         self.expires_time = datetime.datetime(year=self.now_datetime.year, month=self.now_datetime.month,
                                               day=self.now_datetime.day)
         self.config = global_yaml_config.get('TapdTask')
@@ -113,6 +113,10 @@ class TapdSpider():
                     card_msg["card"]["elements"].append({"tag": "hr"})
         if init_msg == card_msg:
             return None
+
+        card_msg["card"]["elements"].append(
+            {"elements": [{"content": self.now_datetime.strftime('%Y-%m-%d %H:%M:%S'), "tag": "lark_md"}],
+             "tag": "note"})
 
         return card_msg
 
