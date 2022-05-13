@@ -14,7 +14,7 @@ class Logger(object):
     def __init__(self, file='appliction.log'):
         logger.setLevel(logging.INFO)
         formatter = logging.Formatter(
-            '%(levelname)s - %(asctime)s - %(pathname)s[line:%(lineno)d] - %(process)d-%(threadName)s ↴\n%(message)s \n')
+            '%(levelname)s - %(asctime)s - %(pathname)s[line:%(lineno)d] - %(process)d-%(threadName)s \n%(message)s \n')
 
         # 控制台输出
         console_handler = logging.StreamHandler()
