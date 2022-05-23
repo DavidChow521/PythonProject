@@ -27,7 +27,7 @@ class TapdSpider():
         self.pm_range = [18, 19, 20]
 
         # 是否在通知时间范围内 且 是工作日
-        if self.now_datetime.hour in self.am_range or self.now_datetime.hour in self.pm_range and is_workday(
+        if (self.now_datetime.hour in self.am_range or self.now_datetime.hour in self.pm_range) and is_workday(
                 self.now_datetime.date()):
             self.exec()
         pass
