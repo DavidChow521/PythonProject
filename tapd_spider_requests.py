@@ -4,7 +4,7 @@
 # @Author : zhoutao
 # @Email : zt13415@ztn.com
 # @File : tapd_spider_requests.py
-# @Software: PyCharm
+
 import copy
 import random
 import datetime
@@ -13,19 +13,20 @@ import requests
 from bs4 import BeautifulSoup
 from chinese_calendar import is_workday
 from libs.logger import logger
+from libs.write_file import WriteFile
 from libs.yaml_config import global_yaml_config
 
 
-class TapdSpider():
+class TapdSpider(object):
     def __init__(self):
         self.now_datetime = datetime.datetime.now()
-        # self.now_datetime = datetime.datetime.strptime('2022-05-26 18:00:00', "%Y-%m-%d %H:%M:%S")
+        # self.now_datetime = datetime.datetime.strptime('2022-06-29 18:00:00', "%Y-%m-%d %H:%M:%S")
         self.expires_time = datetime.datetime(year=self.now_datetime.year, month=self.now_datetime.month,
                                               day=self.now_datetime.day)
         self.config = global_yaml_config.get('TapdTask')
         self.am_range = [9, 10]
         self.pm_range = [18, 19, 20]
-
+        logger.info(f'进入 TapdSpider.__init__')
         # 是否在通知时间范围内 且 是工作日
         if (self.now_datetime.hour in self.am_range or self.now_datetime.hour in self.pm_range) and is_workday(
                 self.now_datetime.date()):
@@ -54,11 +55,11 @@ class TapdSpider():
         www_root = "https://www.tapd.cn/"
         # 获取第一页
         resp_html = self.get_prong_task_html(f"{www_root}/{project_id}/prong/tasks")
-        task_list.extend(self.get_task_list(resp_html))
+        task_list.extend(self.get_task_list(resp_html, 1))
         # 获取第二页
         if self.current_project_page_next_url != None:
             resp_html = self.get_prong_task_html(f"{www_root}/{self.current_project_page_next_url}")
-            task_list.extend(self.get_task_list(resp_html))
+            task_list.extend(self.get_task_list(resp_html, 2))
         if len(task_list) != 0:
             card_msg = self.get_project_message(task_list)
             if card_msg != None:
@@ -90,27 +91,30 @@ class TapdSpider():
                     self.current_not_task_users_dict.update({u: False})
                 if not self.current_not_task_users_dict[u]:
                     for x in task_list:
-                        to_date_time = datetime.datetime.strptime(x["to_time"], "%Y-%m-%d")
-                        if u == x["user"] and to_date_time >= self.expires_time:
-                            self.current_not_task_users_dict.update({u: True})
-                            break
+                        if x["to_time"] is not None or x["to_time"] != "":
+                            to_date_time = datetime.datetime.strptime(x["to_time"], "%Y-%m-%d")
+                            if u == x["user"] and to_date_time >= self.expires_time:
+                                self.current_not_task_users_dict.update({u: True})
+                                break
 
         # 正常任务提醒
         for x in task_list:
-            to_date_time = datetime.datetime.strptime(x["to_time"], "%Y-%m-%d")
-            from_date_time = datetime.datetime.strptime(x["from_time"], "%Y-%m-%d")
-            if (self.now_datetime.hour in self.pm_range and to_date_time == self.expires_time and
-                x["status"] != "已完成") or (
-                    self.now_datetime.hour in self.am_range and from_date_time == self.expires_time and
-                    x["status"] == "未开始"):
-                _extra = self.get_project_message_template(x["title_href"], x["title"], x["iteration"],
-                                                           x["iteration_href"],
-                                                           x["status"], x["working_hour"],
-                                                           self.current_feishu_user_open_ids[x["user"]], x["from_time"],
-                                                           x["to_time"])
-                card_msg["card"]["elements"].append(_extra)
-                if len(task_list) != task_list.index(x):
-                    card_msg["card"]["elements"].append({"tag": "hr"})
+            if x["to_time"] is not None or x["to_time"] != "" and x["from_time"] is not None or x["from_time"] != "":
+                to_date_time = datetime.datetime.strptime(x["to_time"], "%Y-%m-%d")
+                from_date_time = datetime.datetime.strptime(x["from_time"], "%Y-%m-%d")
+                if (self.now_datetime.hour in self.pm_range and to_date_time == self.expires_time and
+                    x["status"] != "已完成") or (
+                        self.now_datetime.hour in self.am_range and from_date_time == self.expires_time and
+                        x["status"] == "未开始"):
+                    _extra = self.get_project_message_template(x["title_href"], x["title"], x["iteration"],
+                                                               x["iteration_href"],
+                                                               x["status"], x["working_hour"],
+                                                               self.current_feishu_user_open_ids[x["user"]],
+                                                               x["from_time"],
+                                                               x["to_time"])
+                    card_msg["card"]["elements"].append(_extra)
+                    if len(task_list) != task_list.index(x):
+                        card_msg["card"]["elements"].append({"tag": "hr"})
         if init_msg == card_msg:
             return None
 
@@ -140,13 +144,14 @@ class TapdSpider():
 
         return card_msg
 
-    def get_task_list(self, resp_html):
+    def get_task_list(self, resp_html, page_index):
         task_list = []
         soup = BeautifulSoup(resp_html, "lxml")
         self.current_project_name = soup.select_one(".project-name").text
         self.current_project_page_next_url = soup.select_one(".page-next").find('a').get('href')
         rows = soup.select("#task_table tbody tr")
-        # wf(f"{self.current_project_name} - TAPD.html").create(resp_text)
+        # WriteFile(f"{self.current_project_name}-{page_index} - TAPD.html").create(
+        #     resp_html)
         for row in rows[1:]:
             title = row.select('td')[3].find('a').text
             title_href = row.select('td')[3].find('a').get('href')
